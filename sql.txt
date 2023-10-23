@@ -1,0 +1,56 @@
+query crear db:
+----------------------------------------------------------------------------------------------------------------
+create database prueba
+use prueba
+
+CREATE TABLE usuario(
+	id INT identity (1,1)  PRIMARY KEY, 
+    userName VARCHAR(255) UNIQUE NOT NULL,
+    psw VARCHAR(120) NOT NULL,
+    nombre VARCHAR(60) NOT NULL,
+	apellido VARCHAR(60) NOT NULL,
+    roll INT
+);
+
+CREATE TABLE UserVIP(
+    id INT identity (1,1)  PRIMARY KEY,  -- Un ID único para cada entrada UserVIP
+    usuario VARCHAR(255) UNIQUE NOT NULL,
+    FOREIGN KEY (usuario) REFERENCES usuario(userName) 
+    ON DELETE CASCADE                   
+);
+
+CREATE TABLE Admin(
+    id INT identity (1,1) PRIMARY KEY,  -- Un ID único para cada entrada Admin
+    usuario VARCHAR(255) UNIQUE NOT NULL,
+    FOREIGN KEY (usuario) REFERENCES usuario(userName) 
+    ON DELETE CASCADE
+);
+
+CREATE TABLE CommonUser(
+    id INT identity(1,1) PRIMARY KEY,  -- Un ID único para cada entrada CommonUser
+    usuario VARCHAR(255) UNIQUE NOT NULL,
+    FOREIGN KEY (usuario) REFERENCES usuario(userName) 
+    ON DELETE CASCADE
+);
+
+
+--------------------------------------------------------------------------------------------------------------------
+query del trigger para agregar registros a cada tabla:
+-------------------------------------------------------------------------------------------------------------------
+CREATE TRIGGER after_usuario_insert
+ON usuario
+AFTER INSERT
+AS
+BEGIN
+    -- Insertar usuarios con roll = 1 en Admin
+    INSERT INTO Admin (usuario)
+    SELECT userName FROM INSERTED WHERE roll = 1;
+
+    -- Insertar usuarios con roll = 2 en UserVIP
+    INSERT INTO UserVIP (usuario)
+    SELECT userName FROM INSERTED WHERE roll = 2;
+
+    -- Insertar usuarios con roll = 3 en CommonUser
+    INSERT INTO CommonUser(usuario)
+    SELECT userName FROM INSERTED WHERE roll = 3;
+END;
